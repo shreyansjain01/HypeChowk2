@@ -1,6 +1,6 @@
 const Order = require("../models/orderModel");
 const Product = require("../models/productModel");
-const ErrorHander = require("../utils/errorhander");
+const ErrorHander = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 
 // Create new Order
@@ -90,29 +90,30 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (req.body.status === "Shipped") {
-    order.orderItems.forEach(async (o) => {
+    for (const o of order.orderItems) {
       await updateStock(o.product, o.quantity);
-    });
+    }
   }
+
   order.orderStatus = req.body.status;
 
   if (req.body.status === "Delivered") {
     order.deliveredAt = Date.now();
   }
 
-  await order.save({ validateBeforeSave: false });
+  await order.save();
   res.status(200).json({
     success: true,
   });
 });
-
 async function updateStock(id, quantity) {
-  const product = await Product.findById(id);
-
-  product.Stock -= quantity;
-
-  await product.save({ validateBeforeSave: false });
+  await Product.findOneAndUpdate(
+    { _id: id },
+    { $inc: { stock: -quantity } },
+    { new: true } // This option returns the updated document
+  );
 }
+
 
 // delete Order -- Admin
 exports.deleteOrder = catchAsyncErrors(async (req, res, next) => {
@@ -122,7 +123,7 @@ exports.deleteOrder = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Order not found with this Id", 404));
   }
 
-  await order.remove();
+  await order.deleteOne();
 
   res.status(200).json({
     success: true,
