@@ -3,7 +3,7 @@ const {registerUser, loginUser, logout, forgotPassword, resetPassword} = require
 const router = express.Router();
 const {isAuthenticatedUser, authorizeRoles} = require("../middleware/auth");
 
-const { getUserDetails, updatePassword, updateProfile, getAllUsers, getSingleUser, updateUserRole, deleteUser } = require("../controllers/userController");
+const { getUserDetails, updatePassword, updateProfile, getAllUsers, getSingleUser, updateUserRole, deleteUser } = require("../controller/userController");
 
 
 router.route("/register").post(registerUser); //This will help to register the user in postman by using link with /api/v1/registration

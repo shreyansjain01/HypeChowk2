@@ -39,13 +39,13 @@ exports.loginUser = catchAsyncErrors(async(req,res,next)=>{
         return next(new ErrorHandler("Invalid Email or password",401));
     }
 
-    const isPasswordMatched = user.comparePassword(password);
+    const isPasswordMatched = await user.comparePassword(password);
 
     if(!isPasswordMatched) {
         return next(new ErrorHandler("Invalid Email or password",401));
     }
 
-    sendToken(user,200,res);
+    sendToken(user, 200, res);
 });
 
 //LogOut User
@@ -169,27 +169,35 @@ exports.updatePassword = catchAsyncErrors(async(req,res,next)=>{
     
 });
 
-//Update User Profile
+//Update User Profile (error Solved using AI)
 
-exports.updateProfile = catchAsyncErrors(async(req,res,next)=>{
+exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
+    const { name, email } = req.body;
 
-    const newUserData = {
-        name:req.body.name,
-        email:req.body.email,
+    if (!name || !email) {
+        return res.status(400).json({
+            success: false,
+            error: 'Both name and email are required for update.',
+        });
     }
 
-    //We will add cloudinary later 
-    const user = await User.findByIdAndUpdate(req.user.id, newUserData,{
-        new:true,
-        runValidators:true,
-        useFindAndModify:false,
+    const newUserData = {
+        name,
+        email,
+    };
 
+    const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
     });
-    
-    res.staus(200).json({
-        success:true,
-    })
+
+    res.status(200).json({
+        success: true,
+        user,
+    });
 });
+
 
 //In productRoutes change .get(getProductDetails) with router.router("/product/:id").get(getProductDetails);
 //Just add admin in links given in productRoutes and change accordingly in postman api (Create, Update & Delete)
@@ -201,7 +209,7 @@ exports.getAllUsers = catchAsyncErrors(async(req,res,next)=>{
 
     res.status(200).json({
         success:true,
-        users,
+        user,
     })
 });
 
@@ -232,37 +240,36 @@ exports.updateUserRole = catchAsyncErrors(async(req,res,next)=>{
     }
 
     //We will add cloudinary later 
-    const user = await User.findByIdAndUpdate(req.user.id, newUserData,{
+    const user = await User.findByIdAndUpdate(req.params.id, newUserData,{
         new:true,
         runValidators:true,
         useFindAndModify:false,
 
     });
     
-    res.staus(200).json({
+    res.status(200).json({
         success:true,
     })
 });
 
 //Delete User (DE)
 
-exports.deleteUser = catchAsyncErrors(async(req,res,next)=>{
-
+exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.params.id);
 
-    
-    //We will removery cloudinary later 
-    if(!user) {next(new ErrorHandler(`Users does not exist with Id : ${req.paras.id}`));
-    };
+    if (!user) {
+        return next(new ErrorHandler(`User does not exist with Id: ${req.params.id}`));
+    }
 
-    await user.remove();
+    await user.deleteOne(); // Use deleteOne() instead of remove()
 
-
-    res.staus(200).json({
-        success:true,
-        message:"User Deleted Successfully"
-    })
+    res.status(200).json({
+        success: true,
+        message: "User Deleted Successfully"
+    });
 });
+
+
 
 
 
